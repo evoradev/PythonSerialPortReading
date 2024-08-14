@@ -1,42 +1,60 @@
 import serial
 import time
+import sys
 
-# Configurar as conexões seriais para cada balança
-ser1 = serial.Serial('COM3', baudrate=5800, timeout=1)
-ser2 = serial.Serial('COM4', baudrate=4800, timeout=1)
-ser3 = serial.Serial('COM5', baudrate=9600, timeout=1)
+def setup_serial(port, baudrate, timeout=1):
+    try:
+        ser = serial.Serial(port, baudrate=baudrate, timeout=timeout)
+        return ser
+    except serial.SerialException as e:
+        print(f"Erro ao abrir a porta {port}: {e}")
+        sys.exit(1)
 
 def read_from_serial(serial_port):
     try:
-        # Leia uma linha de dados da porta serial
         data = serial_port.readline().decode('utf-8').rstrip()
         return data
     except serial.SerialException as e:
         print(f"Erro de leitura da porta {serial_port.portstr}: {e}")
         return None
 
-try:
-    while True:
-        # Leia dados de cada balança
-        data1 = read_from_serial(ser1)
-        data2 = read_from_serial(ser2)
-        data3 = read_from_serial(ser3)
-        
-        if data1:
-            print(f"Dados recebidos da balança 1 (5800 baud): {data1}")
-        if data2:
-            print(f"Dados recebidos da balança 2 (4800 baud): {data2}")
-        if data3:
-            print(f"Dados recebidos da balança 3 (9600 baud): {data3}")
-        
-        # Aguarde um breve momento antes de ler novamente
-        time.sleep(1)
+def save_data_to_file(data, file_path):
+    try:
+        with open(file_path, 'a') as file:
+            file.write(data + '\n')
+    except IOError as e:
+        print(f"Erro ao salvar os dados no arquivo {file_path}: {e}")
 
-except KeyboardInterrupt:
-    print("Interrompido pelo usuário")
+def main():
+    if len(sys.argv) != 4:
+        print("Uso: python main.py <porta_com> <velocidade> <arquivo_saida>")
+        sys.exit(1)
 
-finally:
-    # Fechar as conexões seriais
-    ser1.close()
-    ser2.close()
-    ser3.close()
+    port = sys.argv[1]
+    baudrate_settings = sys.argv[2]
+    file_path = sys.argv[3]
+
+    baudrate, parity, databits, stopbits = baudrate_settings.split(',')
+    baudrate = int(baudrate)
+    timeout = 1  # Pode ajustar conforme necessário
+
+    # Configurar a porta serial
+    ser = setup_serial(port, baudrate, timeout)
+
+    try:
+        while True:
+            data = read_from_serial(ser)
+            if data:
+                print(f"Dados recebidos: {data}")
+                save_data_to_file(data, file_path)
+
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        print("Interrompido pelo usuário")
+
+    finally:
+        ser.close()
+
+if __name__ == "__main__":
+    main()
