@@ -20,10 +20,7 @@ ser = serial.Serial(
 
 # Dados simulados a serem enviados
 data_to_send = [
-    b'5,0kg  1,0kg TRM  3,0kg LIQC',
-    b'5,0kg  1,0kg TRM  3,0kg LIQC',
-    b'5,0kg  1,0kg TRM  3,0kg LIQC',
-    b'5,0kg  1,0kg TRM  3,0kg LIQC'
+    b'Banana Mutante 4.0',
 ]
 
 try:
